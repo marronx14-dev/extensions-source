@@ -1,0 +1,9 @@
+ext {
+    extName = 'ManhwaShot'
+    pkgNameSuffix = 'es.manhwashot'
+    extClass = '.ManhwaShot'
+    extVersionCode = 1
+    isNsfw = true
+}
+
+apply from: "$rootDir/common.gradle"
