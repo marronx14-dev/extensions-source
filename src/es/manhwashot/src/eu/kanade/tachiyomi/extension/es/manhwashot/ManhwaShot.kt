@@ -10,7 +10,6 @@ import eu.kanade.tachiyomi.source.online.HttpSource
 import keiyoushi.annotation.Source
 import keiyoushi.utils.asJsoup
 import okhttp3.Headers
-import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
@@ -20,8 +19,6 @@ abstract class ManhwaShot : HttpSource() {
 
     override val name = "ManhwaShot"
     override val supportsLatest = true
-
-    override val client: OkHttpClient = network.cloudflareClient
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
         .add("Referer", "$baseUrl/")
