@@ -5,16 +5,18 @@ import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.Page
 import eu.kanade.tachiyomi.source.model.SChapter
 import eu.kanade.tachiyomi.source.model.SManga
+import eu.kanade.tachiyomi.source.online.HttpSource
 import eu.kanade.tachiyomi.source.online.ParsedHttpSource
+import keiyoushi.annotation.Source
 import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import io.github.keiyoushi.gradle.api.annotation.Source
-import keiyoushi.annotation.Source
 
 @Source
+abstract class ManhwaShotSource : HttpSource()
+
 class ManhwaShot : ParsedHttpSource() {
 
     override val name = "ManhwaShot"
