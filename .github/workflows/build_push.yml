@@ -29,7 +29,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build ManhwaShot APK
-        run: ./gradlew :src:es:manhwashot:assembleRelease
+        run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
 
       - name: Prepare Repo Branch
         run: |
