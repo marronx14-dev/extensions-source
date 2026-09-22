@@ -12,6 +12,7 @@ import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import io.github.keiyoushi.gradle.api.annotation.Source
+import keiyoushi.annotation.Source
 
 @Source
 class ManhwaShot : ParsedHttpSource() {
