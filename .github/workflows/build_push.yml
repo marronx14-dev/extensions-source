@@ -8,6 +8,9 @@ on:
     paths:
       - 'src/es/manhwashot/**'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: Build ManhwaShot
@@ -21,9 +24,6 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
