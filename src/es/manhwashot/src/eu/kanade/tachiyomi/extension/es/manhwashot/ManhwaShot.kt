@@ -1,7 +1,6 @@
 package eu.kanade.tachiyomi.extension.es.manhwashot
 
 import eu.kanade.tachiyomi.network.GET
-import eu.kanade.tachiyomi.network.asObservableSuccess
 import eu.kanade.tachiyomi.source.model.FilterList
 import eu.kanade.tachiyomi.source.model.MangasPage
 import eu.kanade.tachiyomi.source.model.Page
@@ -14,15 +13,12 @@ import okhttp3.Headers
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
-import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
-import rx.Observable
 
 @Source
-class ManhwaShot : HttpSource() {
+abstract class ManhwaShot : HttpSource() {
 
     override val name = "ManhwaShot"
-    override val baseUrl = "https://manhwashot.lat"
     override val lang = "es"
     override val supportsLatest = true
 
