@@ -6,17 +6,13 @@ plugins {
 
 keiyoushi {
     name = "ManhwaShot"
-    lang = "es"
     versionCode = 1
     contentWarning = ContentWarning.NSFW
     libVersion = "1.4"
 
-    sources {
-        source {
-            baseUrl {
-                custom("https://manhwashot.lat")
-            }
-            versionId = 1
-        }
+    source {
+        lang = "es"
+        baseUrl = "https://manhwashot.lat"
+        versionId = 1
     }
 }
