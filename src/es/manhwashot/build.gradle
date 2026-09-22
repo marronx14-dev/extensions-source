@@ -1,11 +1,20 @@
+import io.github.keiyoushi.gradle.api.ContentWarning
+
 plugins {
-    id("keiyoushi.extension")
+    alias(kei.plugins.extension)
 }
 
-ext {
-    extName = "ManhwaShot"
-    pkgNameSuffix = "es.manhwashot"
-    extClass = ".ManhwaShot"
-    extVersionCode = 1
-    isNsfw = true
+keiyoushi {
+    name = "ManhwaShot"
+    versionCode = 1
+    contentWarning = ContentWarning.NSFW
+    libVersion = "1.4"
+
+    source {
+        lang = "es"
+        baseUrl {
+            custom("https://manhwashot.lat")
+        }
+        versionId = 1
+    }
 }
