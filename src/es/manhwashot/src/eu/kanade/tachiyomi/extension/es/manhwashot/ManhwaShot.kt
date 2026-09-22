@@ -14,9 +14,6 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
-typealias ChapterList = List
-typealias PageList = List
-
 @Source
 abstract class ManhwaShot : HttpSource() {
 
@@ -31,10 +28,11 @@ abstract class ManhwaShot : HttpSource() {
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
-        val mangas = document.select("div.series-grid div.s-card").map { element ->
-            popularMangaFromElement(element)
+        val elements = document.select("div.series-grid div.s-card")
+        val mangaArray = Array(elements.size) { i ->
+            popularMangaFromElement(elements[i])
         }
-        return MangasPage(mangas, false)
+        return MangasPage(mangaArray.asList(), false)
     }
 
     private fun popularMangaFromElement(element: Element): SManga = SManga.create().apply {
@@ -71,17 +69,20 @@ abstract class ManhwaShot : HttpSource() {
         }
     }
 
-    override fun chapterListParse(response: Response): ChapterList {
+    override fun chapterListParse(response: Response) = run {
         val document = response.asJsoup()
-        return document.select("div.chapters-grid a.ch-row").map { element ->
+        val elements = document.select("div.chapters-grid a.ch-row")
+        val chapters = Array(elements.size) { i ->
+            val el = elements[i]
             SChapter.create().apply {
-                name = element.select("span.ch-num").text().trim()
-                setUrlWithoutDomain(element.attr("href"))
+                name = el.select("span.ch-num").text().trim()
+                setUrlWithoutDomain(el.attr("href"))
             }
         }
+        chapters.asList()
     }
 
-    override fun pageListParse(response: Response): PageList {
+    override fun pageListParse(response: Response) = run {
         val html = response.body.string()
         val regex = Regex("""(https://img\.manhwashot\.lat/[^"]+\.webp)""")
 
@@ -91,9 +92,10 @@ abstract class ManhwaShot : HttpSource() {
             .distinct()
             .toList()
 
-        return matchedUrls.mapIndexed { index, url ->
-            Page(index, "", url)
+        val pages = Array(matchedUrls.size) { i ->
+            Page(i, "", matchedUrls[i])
         }
+        pages.asList()
     }
 
     override fun imageUrlParse(response: Response): String = ""
