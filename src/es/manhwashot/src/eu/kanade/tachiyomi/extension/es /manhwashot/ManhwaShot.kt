@@ -11,7 +11,9 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import io.github.keiyoushi.gradle.api.annotation.Source
 
+@Source
 class ManhwaShot : ParsedHttpSource() {
 
     override val name = "ManhwaShot"
