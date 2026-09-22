@@ -14,6 +14,9 @@ import okhttp3.Request
 import okhttp3.Response
 import org.jsoup.nodes.Element
 
+typealias ChapterList = List
+typealias PageList = List
+
 @Source
 abstract class ManhwaShot : HttpSource() {
 
@@ -68,20 +71,17 @@ abstract class ManhwaShot : HttpSource() {
         }
     }
 
-    override fun chapterListParse(response: Response): java.util.List {
+    override fun chapterListParse(response: Response): ChapterList {
         val document = response.asJsoup()
-        val list = ArrayList()
-        document.select("div.chapters-grid a.ch-row").forEach { element ->
-            val chapter = SChapter.create().apply {
+        return document.select("div.chapters-grid a.ch-row").map { element ->
+            SChapter.create().apply {
                 name = element.select("span.ch-num").text().trim()
                 setUrlWithoutDomain(element.attr("href"))
             }
-            list.add(chapter)
         }
-        return list
     }
 
-    override fun pageListParse(response: Response): java.util.List {
+    override fun pageListParse(response: Response): PageList {
         val html = response.body.string()
         val regex = Regex("""(https://img\.manhwashot\.lat/[^"]+\.webp)""")
 
@@ -91,11 +91,9 @@ abstract class ManhwaShot : HttpSource() {
             .distinct()
             .toList()
 
-        val pages = ArrayList()
-        matchedUrls.forEachIndexed { index, url ->
-            pages.add(Page(index, "", url))
+        return matchedUrls.mapIndexed { index, url ->
+            Page(index, "", url)
         }
-        return pages
     }
 
     override fun imageUrlParse(response: Response): String = ""
