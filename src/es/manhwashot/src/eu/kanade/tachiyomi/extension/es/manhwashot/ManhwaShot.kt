@@ -19,7 +19,6 @@ import org.jsoup.nodes.Element
 abstract class ManhwaShot : HttpSource() {
 
     override val name = "ManhwaShot"
-    override val lang = "es"
     override val supportsLatest = true
 
     override val client: OkHttpClient = network.cloudflareClient
