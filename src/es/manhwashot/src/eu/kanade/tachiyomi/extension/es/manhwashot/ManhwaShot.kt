@@ -68,17 +68,20 @@ abstract class ManhwaShot : HttpSource() {
         }
     }
 
-    override fun chapterListParse(response: Response): List {
+    override fun chapterListParse(response: Response): java.util.List {
         val document = response.asJsoup()
-        return document.select("div.chapters-grid a.ch-row").map { element ->
-            SChapter.create().apply {
+        val list = ArrayList()
+        document.select("div.chapters-grid a.ch-row").forEach { element ->
+            val chapter = SChapter.create().apply {
                 name = element.select("span.ch-num").text().trim()
                 setUrlWithoutDomain(element.attr("href"))
             }
+            list.add(chapter)
         }
+        return list
     }
 
-    override fun pageListParse(response: Response): List {
+    override fun pageListParse(response: Response): java.util.List {
         val html = response.body.string()
         val regex = Regex("""(https://img\.manhwashot\.lat/[^"]+\.webp)""")
 
@@ -88,9 +91,11 @@ abstract class ManhwaShot : HttpSource() {
             .distinct()
             .toList()
 
-        return matchedUrls.mapIndexed { index, url ->
-            Page(index, "", url)
+        val pages = ArrayList()
+        matchedUrls.forEachIndexed { index, url ->
+            pages.add(Page(index, "", url))
         }
+        return pages
     }
 
     override fun imageUrlParse(response: Response): String = ""
