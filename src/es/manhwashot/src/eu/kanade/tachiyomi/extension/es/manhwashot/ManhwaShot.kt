@@ -21,10 +21,10 @@ abstract class ManhwaShot : HttpSource() {
     override val supportsLatest = true
 
     override fun headersBuilder(): Headers.Builder = super.headersBuilder()
-        .add("Referer", "$baseUrl/")
+        .add("Referer", baseUrl + "/")
 
     override fun popularMangaRequest(page: Int): Request =
-        GET("\(baseUrl/explorar/?page=\)page", headers)
+        GET(baseUrl + "/explorar/?page=" + page, headers)
 
     override fun popularMangaParse(response: Response): MangasPage {
         val document = response.asJsoup()
@@ -41,12 +41,12 @@ abstract class ManhwaShot : HttpSource() {
     }
 
     override fun latestUpdatesRequest(page: Int): Request =
-        GET("\(baseUrl/explorar/?sort=latest&page=\)page", headers)
+        GET(baseUrl + "/explorar/?sort=latest&page=" + page, headers)
 
     override fun latestUpdatesParse(response: Response): MangasPage = popularMangaParse(response)
 
     override fun searchMangaRequest(page: Int, query: String, filters: FilterList): Request =
-        GET("\(baseUrl/explorar/?q=\)query&page=$page", headers)
+        GET(baseUrl + "/explorar/?q=" + query + "&page=" + page, headers)
 
     override fun searchMangaParse(response: Response): MangasPage = popularMangaParse(response)
 
@@ -80,7 +80,7 @@ abstract class ManhwaShot : HttpSource() {
 
     override fun pageListParse(response: Response): List {
         val html = response.body.string()
-        val regex = """"(https://img\.manhwashot\.lat/[^"]+\.webp)"""".toRegex()
+        val regex = Regex("""(https://img\.manhwashot\.lat/[^"]+\.webp)""")
 
         val matchedUrls = regex.findAll(html)
             .map { it.groupValues[1] }
