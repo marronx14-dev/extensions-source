@@ -12,7 +12,9 @@ keiyoushi {
 
     source {
         lang = "es"
-        baseUrl = "https://manhwashot.lat"
+        baseUrl {
+            custom("https://manhwashot.lat")
+        }
         versionId = 1
     }
 }
