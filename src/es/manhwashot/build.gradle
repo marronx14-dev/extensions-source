@@ -1,11 +1,11 @@
 plugins {
-    id("tachiyomi.extension")
+    id("keiyoushi.extension")
 }
 
-tachiyomi {
-    name = "ManhwaShot"
-    pkg = "eu.kanade.tachiyomi.extension.es.manhwashot"
+ext {
+    extName = "ManhwaShot"
+    pkgNameSuffix = "es.manhwashot"
     extClass = ".ManhwaShot"
-    versionCode = 1
+    extVersionCode = 1
     isNsfw = true
 }
