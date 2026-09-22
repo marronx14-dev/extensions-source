@@ -1,9 +1,11 @@
-ext {
-    extName = 'ManhwaShot'
-    pkgNameSuffix = 'es.manhwashot'
-    extClass = '.ManhwaShot'
-    extVersionCode = 1
-    isNsfw = true
+plugins {
+    id("tachiyomi.extension")
 }
 
-apply from: "$rootDir/common.gradle"
+tachiyomi {
+    name = "ManhwaShot"
+    pkg = "eu.kanade.tachiyomi.extension.es.manhwashot"
+    extClass = ".ManhwaShot"
+    versionCode = 1
+    isNsfw = true
+}
