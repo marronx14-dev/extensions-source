@@ -34,7 +34,7 @@ jobs:
       - name: Prepare Repo Branch
         run: |
           mkdir -p deploy/apk
-          cp src/es/manhwashot/build/outputs/apk/release/*.apk deploy/apk/manhwashot-release.apk
+          find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/apk/manhwashot-release.apk \;
           cat << 'EOF' > deploy/index.min.json
           [
             {
@@ -43,7 +43,7 @@ jobs:
               "apk": "manhwashot-release.apk",
               "lang": "es",
               "code": 1,
-              "version": "1.0.0",
+              "version": "1.4.1",
               "nsfw": 1,
               "hasReadme": 0,
               "hasChangelog": 0
