@@ -31,39 +31,39 @@ jobs:
       - name: Build ManhwaShot APK
         run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
 
-      - name: Generate Tachimanga Compatible Repo
+      - name: Generate Official Repo Structure
         run: |
           mkdir -p deploy/apk
           
-          # Ubicar el APK compilado
+          # Copiar el APK recién compilado
           APK_PATH=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
           cp "$APK_PATH" deploy/apk/manhwashot-release.apk
 
-          # Obtener huella SHA256
-          FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk 2>/dev/null | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          # Extraer huella SHA-256 en minúsculas de 64 caracteres
+          FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
           if [ -z "\(FP" ] || [\){#FP} -ne 64 ]; then
             FP=$(sha256sum deploy/apk/manhwashot-release.apk | awk '{print $1}')
           fi
-          echo "Fingerprint SHA-256: $FP"
+          echo "FP: $FP"
 
-          # repo.json requerido
+          # repo.json requerido por Tachimanga
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
               "name": "ManhwaShot",
-              "description": "Repositorio ManhwaShot para Tachimanga",
+              "description": "Repositorio ManhwaShot",
               "website": "https://marronx14-dev.github.io/extensions-source"
             }
           }
           EOF
 
-          # index.min.json con modelo estricto para lectores basados en iOS/Mihon
+          # index.min.json con el esquema exacto de NetworkExtension (Mihon/Tachimanga)
           cat << EOF > deploy/index.min.json
           [
             {
               "name": "ManhwaShot",
               "pkg": "eu.kanade.tachiyomi.extension.es.manhwashot",
-              "apk": "apk/manhwashot-release.apk",
+              "apk": "manhwashot-release.apk",
               "lang": "es",
               "code": 1,
               "version": "1.4.1",
@@ -84,14 +84,11 @@ jobs:
           ]
           EOF
 
-          # Generar copias de respaldo
+          # Copias en todas las rutas y variantes que Tachimanga consulta
           cp deploy/index.min.json deploy/index.json
-          
-          # Generar versión comprimida GZIP (prioritaria en Tachimanga para index.min.json)
           gzip -c deploy/index.min.json > deploy/index.min.json.gz
-          gzip -c deploy/index.json > deploy/index.json.gz
 
-          # Crear espejo en raíz y subcarpeta
+          # Espejo en subcarpeta repo/
           mkdir -p deploy/repo/apk
           cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
           cp deploy/repo.json deploy/repo/repo.json
