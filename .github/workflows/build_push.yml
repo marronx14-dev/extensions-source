@@ -28,34 +28,77 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build APK and Inspect Repo
-        run: |
-          ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
-          ./gradlew :inspector:run --args="repo" || true
+      - name: Build ManhwaShot APK
+        run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
 
-      - name: Prepare Repo Branch
+      - name: Prepare Files and Generate Valid Index
         run: |
           mkdir -p deploy/apk
-
-          # Copiar el APK compilado
-          APK_PATH=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
-          cp "$APK_PATH" deploy/apk/manhwashot-release.apk
-
-          # Si el inspector generó el repo, moverlo a deploy
-          if [ -d "repo" ]; then
-            cp -r repo/* deploy/
+          
+          # Buscar el archivo APK recién compilado
+          APK_FILE=$(find src/es/manhwashot/build/outputs/apk -name "*.apk" | head -n 1)
+          if [ -z "$APK_FILE" ]; then
+            APK_FILE=$(find . -name "*manhwashot*.apk" | head -n 1)
           fi
+          echo "APK encontrado en: $APK_FILE"
+          
+          cp "$APK_FILE" deploy/apk/manhwashot-release.apk
 
-          # Garantizar que repo.json exista en la raíz
+          # Extraer huella SHA256 oficial
+          FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          if [ -z "$FP" ]; then
+            FP="d8591f4a9f3e4c84351d3b379e49c719e6d97b4b1049b106323c89b33a598ff7"
+          fi
+          echo "FINGERPRINT: $FP"
+
+          # repo.json que exige Mihon
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
-              "name": "ManhwaShot",
-              "description": "Extension ManhwaShot",
+              "name": "ManhwaShot Repo",
+              "description": "Repositorio para ManhwaShot",
               "website": "https://marronx14-dev.github.io/extensions-source"
             }
           }
           EOF
+
+          # index.min.json con el esquema exacto de kotlinx.serialization para Mihon
+          cat << EOF > deploy/index.min.json
+          [
+            {
+              "name": "ManhwaShot",
+              "pkg": "eu.kanade.tachiyomi.extension.es.manhwashot",
+              "apk": "manhwashot-release.apk",
+              "lang": "es",
+              "code": 1,
+              "version": "1.4.1",
+              "nsfw": 1,
+              "hasReadme": 0,
+              "hasChangelog": 0,
+              "signingKeyFingerprint": "$FP",
+              "libVersion": 1.4,
+              "sources": [
+                {
+                  "name": "ManhwaShot",
+                  "id": 8512398471209384712,
+                  "baseUrl": "https://manhwashot.lat",
+                  "lang": "es",
+                  "signingKeyFingerprint": "$FP"
+                }
+              ]
+            }
+          ]
+          EOF
+
+          # Duplicar archivos para cubrir cualquier ruta que Mihon solicite
+          cp deploy/index.min.json deploy/index.json
+          mkdir -p deploy/repo/apk
+          cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
+          cp deploy/index.min.json deploy/repo/index.min.json
+          cp deploy/repo.json deploy/repo/repo.json
+
+          ls -la deploy
+          ls -la deploy/apk
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
