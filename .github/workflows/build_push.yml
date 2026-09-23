@@ -33,9 +33,12 @@ jobs:
 
       - name: Prepare Repo Branch
         run: |
+          mkdir -p deploy/repo/apk
           mkdir -p deploy/apk
-          find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/apk/manhwashot-release.apk \;
-          cat << 'EOF' > deploy/index.min.json
+          find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/repo/apk/manhwashot-release.apk \;
+          cp deploy/repo/apk/manhwashot-release.apk deploy/apk/manhwashot-release.apk
+
+          cat << 'EOF' > deploy/repo/index.min.json
           [
             {
               "name": "ManhwaShot",
@@ -50,7 +53,9 @@ jobs:
             }
           ]
           EOF
-          cp deploy/index.min.json deploy/index.json
+          cp deploy/repo/index.min.json deploy/index.min.json
+          cp deploy/repo/index.min.json deploy/repo/index.json
+          cp deploy/repo/index.min.json deploy/index.json
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
