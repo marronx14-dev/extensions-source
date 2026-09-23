@@ -33,12 +33,26 @@ jobs:
 
       - name: Prepare Repo Branch
         run: |
-          mkdir -p deploy/repo/apk
           mkdir -p deploy/apk
-          find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/repo/apk/manhwashot-release.apk \;
-          cp deploy/repo/apk/manhwashot-release.apk deploy/apk/manhwashot-release.apk
+          mkdir -p deploy/repo/apk
+          
+          find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/apk/manhwashot-release.apk \;
+          cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
 
-          cat << 'EOF' > deploy/repo/index.min.json
+          cat << 'EOF' > deploy/repo.json
+          {
+            "meta": {
+              "name": "ManhwaShot",
+              "description": "Repositorio de la extension ManhwaShot",
+              "website": "https://marronx14-dev.github.io/extensions-source"
+            },
+            "name": "ManhwaShot",
+            "website": "https://marronx14-dev.github.io/extensions-source"
+          }
+          EOF
+          cp deploy/repo.json deploy/repo/repo.json
+
+          cat << 'EOF' > deploy/index.min.json
           [
             {
               "name": "ManhwaShot",
@@ -49,13 +63,21 @@ jobs:
               "version": "1.4.1",
               "nsfw": 1,
               "hasReadme": 0,
-              "hasChangelog": 0
+              "hasChangelog": 0,
+              "sources": [
+                {
+                  "name": "ManhwaShot",
+                  "id": 8512398471209384712,
+                  "baseUrl": "https://manhwashot.lat",
+                  "lang": "es"
+                }
+              ]
             }
           ]
           EOF
-          cp deploy/repo/index.min.json deploy/index.min.json
-          cp deploy/repo/index.min.json deploy/repo/index.json
-          cp deploy/repo/index.min.json deploy/index.json
+          cp deploy/index.min.json deploy/index.json
+          cp deploy/index.min.json deploy/repo/index.min.json
+          cp deploy/index.min.json deploy/repo/index.json
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
