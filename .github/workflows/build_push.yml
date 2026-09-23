@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Build ManhwaShot
+    name: Build ManhwaShot for Tachimanga
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -31,39 +31,39 @@ jobs:
       - name: Build ManhwaShot APK
         run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
 
-      - name: Prepare Repo and Build Valid Mihon Index
+      - name: Generate Tachimanga Compatible Repo
         run: |
           mkdir -p deploy/apk
+          
+          # Ubicar el APK compilado
+          APK_PATH=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
+          cp "$APK_PATH" deploy/apk/manhwashot-release.apk
 
-          # 1. Copiar APK
-          APK_FILE=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
-          cp "$APK_FILE" deploy/apk/manhwashot-release.apk
-
-          # 2. Extraer SHA256 real (64 caracteres limpios en minúsculas)
-          FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
-          if [ ${#FP} -ne 64 ]; then
-            FP=$(sha256sum deploy/apk/manhwashot-release.apk | cut -d ' ' -f 1)
+          # Obtener huella SHA256
+          FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk 2>/dev/null | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          if [ -z "\(FP" ] || [\){#FP} -ne 64 ]; then
+            FP=$(sha256sum deploy/apk/manhwashot-release.apk | awk '{print $1}')
           fi
-          echo "SHA256 Fingerprint final: $FP"
+          echo "Fingerprint SHA-256: $FP"
 
-          # 3. repo.json oficial
+          # repo.json requerido
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
-              "name": "ManhwaShot Repo",
-              "description": "Repositorio ManhwaShot",
+              "name": "ManhwaShot",
+              "description": "Repositorio ManhwaShot para Tachimanga",
               "website": "https://marronx14-dev.github.io/extensions-source"
             }
           }
           EOF
 
-          # 4. index.min.json con el esquema estricto de Mihon
+          # index.min.json con modelo estricto para lectores basados en iOS/Mihon
           cat << EOF > deploy/index.min.json
           [
             {
               "name": "ManhwaShot",
               "pkg": "eu.kanade.tachiyomi.extension.es.manhwashot",
-              "apk": "manhwashot-release.apk",
+              "apk": "apk/manhwashot-release.apk",
               "lang": "es",
               "code": 1,
               "version": "1.4.1",
@@ -84,10 +84,19 @@ jobs:
           ]
           EOF
 
-          # Copias adicionales que Mihon consulta por compatibilidad
+          # Generar copias de respaldo
           cp deploy/index.min.json deploy/index.json
-          gzip -kf deploy/index.min.json
-          gzip -kf deploy/index.json
+          
+          # Generar versión comprimida GZIP (prioritaria en Tachimanga para index.min.json)
+          gzip -c deploy/index.min.json > deploy/index.min.json.gz
+          gzip -c deploy/index.json > deploy/index.json.gz
+
+          # Crear espejo en raíz y subcarpeta
+          mkdir -p deploy/repo/apk
+          cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
+          cp deploy/repo.json deploy/repo/repo.json
+          cp deploy/index.min.json deploy/repo/index.min.json
+          cp deploy/index.min.json.gz deploy/repo/index.min.json.gz
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
