@@ -28,60 +28,22 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build ManhwaShot APK and Index
+      - name: Build Repo via Gradle
         run: |
           ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
-          ./gradlew createReleaseRepo -x spotlessCheck -x spotlessKotlinCheck || true
+          ./gradlew createRepo -x spotlessCheck -x spotlessKotlinCheck
 
       - name: Prepare Repo Branch
         run: |
-          mkdir -p deploy/apk
+          mkdir -p deploy
           
-          # Copiar el APK compilado
-          find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/apk/manhwashot-release.apk \;
+          # Copiar la salida generada por la tarea oficial createRepo de Keiyoushi
+          if [ -d "repo" ]; then
+            cp -r repo/* deploy/
+          fi
 
-          # Si Gradle generó repo/ o index, usarlo; si no, estructurar el JSON con el modelo exacto de Mihon
-          FINGERPRINT=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep "SHA256:" | head -n 1 | tr -d '[:space:]' | cut -d: -f2- | tr '[:upper:]' '[:lower:]' | tr -d ':')
-          [ -z "$FINGERPRINT" ] && FINGERPRINT="0000000000000000000000000000000000000000000000000000000000000000"
-
-          cat << 'EOF' > deploy/repo.json
-          {
-            "meta": {
-              "name": "ManhwaShot",
-              "description": "Repositorio ManhwaShot",
-              "website": "https://marronx14-dev.github.io/extensions-source"
-            }
-          }
-          EOF
-
-          cat << EOF > deploy/index.min.json
-          [
-            {
-              "name": "ManhwaShot",
-              "pkg": "eu.kanade.tachiyomi.extension.es.manhwashot",
-              "apk": "manhwashot-release.apk",
-              "lang": "es",
-              "code": 1,
-              "version": "1.4.1",
-              "nsfw": 1,
-              "hasReadme": 0,
-              "hasChangelog": 0,
-              "signingKeyFingerprint": "$FINGERPRINT",
-              "libVersion": 1.4,
-              "sources": [
-                {
-                  "name": "ManhwaShot",
-                  "id": 8512398471209384712,
-                  "baseUrl": "https://manhwashot.lat",
-                  "lang": "es",
-                  "signingKeyFingerprint": "$FINGERPRINT"
-                }
-              ]
-            }
-          ]
-          EOF
-
-          cp deploy/index.min.json deploy/index.json
+          # Asegurar que el APK y los índices estén en la raíz de deploy
+          find build -name "*.apk" -o -name "*.json" 2>/dev/null || true
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
