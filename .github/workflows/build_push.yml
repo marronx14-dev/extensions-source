@@ -31,38 +31,33 @@ jobs:
       - name: Build ManhwaShot APK
         run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
 
-      - name: Prepare Files and Generate Valid Index
+      - name: Prepare Repo and Build Valid Mihon Index
         run: |
           mkdir -p deploy/apk
-          
-          # Buscar el archivo APK recién compilado
-          APK_FILE=$(find src/es/manhwashot/build/outputs/apk -name "*.apk" | head -n 1)
-          if [ -z "$APK_FILE" ]; then
-            APK_FILE=$(find . -name "*manhwashot*.apk" | head -n 1)
-          fi
-          echo "APK encontrado en: $APK_FILE"
-          
+
+          # 1. Copiar APK
+          APK_FILE=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
           cp "$APK_FILE" deploy/apk/manhwashot-release.apk
 
-          # Extraer huella SHA256 oficial
+          # 2. Extraer SHA256 real (64 caracteres limpios en minúsculas)
           FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
-          if [ -z "$FP" ]; then
-            FP="d8591f4a9f3e4c84351d3b379e49c719e6d97b4b1049b106323c89b33a598ff7"
+          if [ ${#FP} -ne 64 ]; then
+            FP=$(sha256sum deploy/apk/manhwashot-release.apk | cut -d ' ' -f 1)
           fi
-          echo "FINGERPRINT: $FP"
+          echo "SHA256 Fingerprint final: $FP"
 
-          # repo.json que exige Mihon
+          # 3. repo.json oficial
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
               "name": "ManhwaShot Repo",
-              "description": "Repositorio para ManhwaShot",
+              "description": "Repositorio ManhwaShot",
               "website": "https://marronx14-dev.github.io/extensions-source"
             }
           }
           EOF
 
-          # index.min.json con el esquema exacto de kotlinx.serialization para Mihon
+          # 4. index.min.json con el esquema estricto de Mihon
           cat << EOF > deploy/index.min.json
           [
             {
@@ -82,23 +77,17 @@ jobs:
                   "name": "ManhwaShot",
                   "id": 8512398471209384712,
                   "baseUrl": "https://manhwashot.lat",
-                  "lang": "es",
-                  "signingKeyFingerprint": "$FP"
+                  "lang": "es"
                 }
               ]
             }
           ]
           EOF
 
-          # Duplicar archivos para cubrir cualquier ruta que Mihon solicite
+          # Copias adicionales que Mihon consulta por compatibilidad
           cp deploy/index.min.json deploy/index.json
-          mkdir -p deploy/repo/apk
-          cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
-          cp deploy/index.min.json deploy/repo/index.min.json
-          cp deploy/repo.json deploy/repo/repo.json
-
-          ls -la deploy
-          ls -la deploy/apk
+          gzip -kf deploy/index.min.json
+          gzip -kf deploy/index.json
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
