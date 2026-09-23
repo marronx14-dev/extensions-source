@@ -28,36 +28,31 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build ManhwaShot APK
-        run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
+      - name: Build ManhwaShot APK and Index
+        run: |
+          ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
+          ./gradlew createReleaseRepo -x spotlessCheck -x spotlessKotlinCheck || true
 
       - name: Prepare Repo Branch
         run: |
           mkdir -p deploy/apk
-          mkdir -p deploy/repo/apk
           
+          # Copiar el APK compilado
           find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/apk/manhwashot-release.apk \;
-          cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
 
-          # Extraer la huella SHA-256 real de la firma del APK
-          FINGERPRINT=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep "SHA256:" | head -n 1 | tr -d '[:space:]' | cut -d: -f2- | tr '[:upper:]' '[:lower:]')
-          if [ -z "$FINGERPRINT" ]; then
-            FINGERPRINT="default"
-          fi
-          echo "Fingerprint detectado: $FINGERPRINT"
+          # Si Gradle generó repo/ o index, usarlo; si no, estructurar el JSON con el modelo exacto de Mihon
+          FINGERPRINT=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep "SHA256:" | head -n 1 | tr -d '[:space:]' | cut -d: -f2- | tr '[:upper:]' '[:lower:]' | tr -d ':')
+          [ -z "$FINGERPRINT" ] && FINGERPRINT="0000000000000000000000000000000000000000000000000000000000000000"
 
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
               "name": "ManhwaShot",
-              "description": "Repositorio de la extension ManhwaShot",
+              "description": "Repositorio ManhwaShot",
               "website": "https://marronx14-dev.github.io/extensions-source"
-            },
-            "name": "ManhwaShot",
-            "website": "https://marronx14-dev.github.io/extensions-source"
+            }
           }
           EOF
-          cp deploy/repo.json deploy/repo/repo.json
 
           cat << EOF > deploy/index.min.json
           [
@@ -72,20 +67,21 @@ jobs:
               "hasReadme": 0,
               "hasChangelog": 0,
               "signingKeyFingerprint": "$FINGERPRINT",
+              "libVersion": 1.4,
               "sources": [
                 {
                   "name": "ManhwaShot",
                   "id": 8512398471209384712,
                   "baseUrl": "https://manhwashot.lat",
-                  "lang": "es"
+                  "lang": "es",
+                  "signingKeyFingerprint": "$FINGERPRINT"
                 }
               ]
             }
           ]
           EOF
+
           cp deploy/index.min.json deploy/index.json
-          cp deploy/index.min.json deploy/repo/index.min.json
-          cp deploy/index.min.json deploy/repo/index.json
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
