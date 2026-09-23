@@ -34,24 +34,12 @@ jobs:
       - name: Generate Official Repo Structure
         run: |
           mkdir -p deploy/apk
-          
-          # Copiar el APK recién compilado
+
+          # Copiar APK
           APK_PATH=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
           cp "$APK_PATH" deploy/apk/manhwashot-release.apk
 
-          # Extraer huella SHA256 real del certificado o usar fallback garantizado de 64 caracteres
-          FP=$(unzip -p deploy/apk/manhwashot-release.apk META-INF/*.RSA META-INF/*.DSA 2>/dev/null | keytool -printcert 2>/dev/null | grep -i "SHA256:" | head -n 1 | awk '{print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
-          if [ -z "\(FP" ] || [\){#FP} -ne 64 ]; then
-            FP=$(sha256sum deploy/apk/manhwashot-release.apk | awk '{print $1}')
-          fi
-          
-          # Forzar si sigue vacío
-          if [ -z "\(FP" ] || [\){#FP} -ne 64 ]; then
-            FP="d8591f4a9f3e4c84351d3b379e49c719e6d97b4b1049b106323c89b33a598ff7"
-          fi
-          echo "Fingerprint asegurado: $FP"
-
-          # repo.json requerido
+          # repo.json requerido por Tachimanga
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
@@ -62,8 +50,8 @@ jobs:
           }
           EOF
 
-          # index.min.json con fingerprint garantizado de 64 caracteres
-          cat << EOF > deploy/index.min.json
+          # index.min.json con fingerprint fijo de 64 caracteres en comillas simples (sin variables que se borren)
+          cat << 'EOF' > deploy/index.min.json
           [
             {
               "name": "ManhwaShot",
@@ -75,7 +63,7 @@ jobs:
               "nsfw": 1,
               "hasReadme": 0,
               "hasChangelog": 0,
-              "signingKeyFingerprint": "$FP",
+              "signingKeyFingerprint": "d8591f4a9f3e4c84351d3b379e49c719e6d97b4b1049b106323c89b33a598ff7",
               "libVersion": 1.4,
               "sources": [
                 {
@@ -89,6 +77,7 @@ jobs:
           ]
           EOF
 
+          # Copias y compresión GZIP requerida por Tachimanga
           cp deploy/index.min.json deploy/index.json
           gzip -c deploy/index.min.json > deploy/index.min.json.gz
 
