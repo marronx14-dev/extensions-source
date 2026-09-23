@@ -39,6 +39,13 @@ jobs:
           find src/es/manhwashot/build -name "*.apk" -exec cp {} deploy/apk/manhwashot-release.apk \;
           cp deploy/apk/manhwashot-release.apk deploy/repo/apk/manhwashot-release.apk
 
+          # Extraer la huella SHA-256 real de la firma del APK
+          FINGERPRINT=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep "SHA256:" | head -n 1 | tr -d '[:space:]' | cut -d: -f2- | tr '[:upper:]' '[:lower:]')
+          if [ -z "$FINGERPRINT" ]; then
+            FINGERPRINT="default"
+          fi
+          echo "Fingerprint detectado: $FINGERPRINT"
+
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
@@ -52,7 +59,7 @@ jobs:
           EOF
           cp deploy/repo.json deploy/repo/repo.json
 
-          cat << 'EOF' > deploy/index.min.json
+          cat << EOF > deploy/index.min.json
           [
             {
               "name": "ManhwaShot",
@@ -64,6 +71,7 @@ jobs:
               "nsfw": 1,
               "hasReadme": 0,
               "hasChangelog": 0,
+              "signingKeyFingerprint": "$FINGERPRINT",
               "sources": [
                 {
                   "name": "ManhwaShot",
