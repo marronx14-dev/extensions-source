@@ -28,67 +28,34 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build ManhwaShot APK
-        run: ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
+      - name: Build APK and Inspect Repo
+        run: |
+          ./gradlew :src:es:manhwashot:assembleRelease -x spotlessCheck -x spotlessKotlinCheck
+          ./gradlew :inspector:run --args="repo" || true
 
       - name: Prepare Repo Branch
         run: |
           mkdir -p deploy/apk
-          mkdir -p deploy/repo/apk
 
           # Copiar el APK compilado
           APK_PATH=$(find src/es/manhwashot/build -name "*.apk" | head -n 1)
           cp "$APK_PATH" deploy/apk/manhwashot-release.apk
-          cp "$APK_PATH" deploy/repo/apk/manhwashot-release.apk
 
-          # Extraer el hash SHA-256 limpio de 64 caracteres
-          RAW_FP=$(keytool -printcert -jarfile deploy/apk/manhwashot-release.apk | grep -i "SHA256:" | head -n 1 | cut -d: -f2- | tr -d '[:space:]' | tr -d ':' | tr '[:upper:]' '[:lower:]')
-          if [ -z "$RAW_FP" ]; then
-            RAW_FP=$(sha256sum deploy/apk/manhwashot-release.apk | cut -d ' ' -f 1)
+          # Si el inspector generó el repo, moverlo a deploy
+          if [ -d "repo" ]; then
+            cp -r repo/* deploy/
           fi
-          echo "Fingerprint extraído: $RAW_FP"
 
+          # Garantizar que repo.json exista en la raíz
           cat << 'EOF' > deploy/repo.json
           {
             "meta": {
               "name": "ManhwaShot",
-              "description": "Repositorio ManhwaShot",
+              "description": "Extension ManhwaShot",
               "website": "https://marronx14-dev.github.io/extensions-source"
             }
           }
           EOF
-          cp deploy/repo.json deploy/repo/repo.json
-
-          cat << EOF > deploy/index.min.json
-          [
-            {
-              "name": "ManhwaShot",
-              "pkg": "eu.kanade.tachiyomi.extension.es.manhwashot",
-              "apk": "manhwashot-release.apk",
-              "lang": "es",
-              "code": 1,
-              "version": "1.4.1",
-              "nsfw": 1,
-              "hasReadme": 0,
-              "hasChangelog": 0,
-              "signingKeyFingerprint": "$RAW_FP",
-              "libVersion": 1.4,
-              "sources": [
-                {
-                  "name": "ManhwaShot",
-                  "id": 8512398471209384712,
-                  "baseUrl": "https://manhwashot.lat",
-                  "lang": "es",
-                  "signingKeyFingerprint": "$RAW_FP"
-                }
-              ]
-            }
-          ]
-          EOF
-
-          cp deploy/index.min.json deploy/index.json
-          cp deploy/index.min.json deploy/repo/index.min.json
-          cp deploy/index.min.json deploy/repo/index.json
 
       - name: Deploy to GitHub Pages (repo branch)
         uses: peaceiris/actions-gh-pages@v4
