@@ -1,0 +1,23 @@
+[
+  {
+    "name": "ManhwaShot",
+    "pkg": "eu.kanade.tachiyomi.extension.es.manhwashot",
+    "apk": "manhwashot-release.apk",
+    "lang": "es",
+    "code": 1,
+    "version": "1.4.1",
+    "nsfw": 1,
+    "hasReadme": 0,
+    "hasChangelog": 0,
+    "signingKeyFingerprint": "d8591f4a9f3e4c84351d3b379e49c719e6d97b4b1049b106323c89b33a598ff7",
+    "libVersion": 1.4,
+    "sources": [
+      {
+        "name": "ManhwaShot",
+        "id": 8512398471209384712,
+        "baseUrl": "https://manhwashot.lat",
+        "lang": "es"
+      }
+    ]
+  }
+]
